@@ -1,5 +1,6 @@
 const express = require("express");
 const morgan = require("morgan");
+const compression = require("compression")
 const AppError = require("./utils/appError")
 const globalErrorHandler = require("./controllers/errorController")
 const postRouter = require("./routes/postRoutes");
@@ -24,6 +25,8 @@ if(process.env.NODE_ENV === "development"){
 }
 
 app.use(logger)
+
+app.use(compression())
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
