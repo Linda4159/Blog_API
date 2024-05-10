@@ -22,7 +22,7 @@ const sendOTP = async ({ email, subject, message, duration }) => {
 
     // send Email
     const mailOptions = {
-      from: process.env.AUTH_EMAIL,
+      from: process.env.AUTH_MAIL,
       to: email,
       subject,
       html: `<p>${message}</p style="color:tomato;font-size:25px;letter-spacing:2px;"><b>${generatedOTP}</b></p><p>This code <b>expires in ${duration} minutes(s)<b/>.</p>`,
