@@ -3,10 +3,8 @@ const dotenv = require("dotenv");
 process.on("uncaughtException", (err) => {
   console.log(err.name, err.message);
   console.log("UNCAUGHT EXCEPTION!!! Shutting down...");
-    process.exit(1)
+  process.exit(1);
 });
-
-
 
 dotenv.config({ path: "./.env" });
 
@@ -15,7 +13,7 @@ connectDB();
 
 const app = require("./app");
 
-console.log(app.get("env"))
+console.log(app.get("env"));
 // console.log(process.env);
 
 const port = process.env.PORT || 9955;
@@ -31,5 +29,3 @@ process.on("unhandledRejection", (err) => {
     process.exit(1);
   });
 });
-
-

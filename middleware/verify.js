@@ -1,44 +1,68 @@
-const express = require("express")
+const { promisify } = require("util");
+const express = require("express");
 const dotenv = require("dotenv");
 dotenv.config({ path: "./.env" });
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const AppError = require("./../utils/appError");
+const catchAsync = require("./../utils/catchAsync");
+const userModel = require("../models/userModel");
 
+const verify = catchAsync(async (req, res, next) => {
+  let token;
+  if (req.headers.authorization) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+  // console.log(token)
+  if (!token) {
+    const error = new AppError(
+      "You are not logged in!!! Please log in to gain access",
+      401
+    );
+    next(error);
+  }
 
-// const verify = async(req,res,next)=>{
-//      let token;
-// if(req.headers.authorization){
-// token = req.headers.authorization.split(" ")[1]
-// }
-// // console.log(token)
-// if(!token){
-//     return res.status(401).json({message:"You are not logged in!!! Please log in to gain access"})
-// }
-// const verifyToken = await jwt.verify(token,"myBlog-api-1234567890-desktop",(error,payload)=>{
-//     if(error){
-//         return res.status(403).json({message:"Wrong or expired token, Please login again!!!"})
-//     }else{
-//         req.user = payload
-//         next()
+  //   verify users token
+  const verifyToken = await promisify(jwt.verify)(token, process.env.TOKEN_KEY);
+  //   console.log(verifyToken);
+
+  // check if user exist
+  const user = await userModel.findById(verifyToken.id);
+
+  if (!user) {
+    const error = new AppError(
+      "This user with the given token does no longer exist",
+      401
+    );
+    next(error);
+  }
+
+  req.user = user;
+  next();
+});
+
+// const verifyToken = async(req,res,next)=>{
+//     const token = req.body.token || req.query.token || req.headers.authorization
+
+//     // check if token exist
+//     if(!token){
+//         // return res.status(403).json({message:"An authentication token is required..."})
+//         const error = new AppError ("An authentication token is required...", 401)
+
+//         return next(error)
 //     }
-//     // console.log(verifyToken)
-// })
+//      await jwt.verify(token,process.env.TOKEN_KEY,(err,payload)=>{
+//         if(err){
+//             // return res.status(403).json({message:"Wrong or Invalid token,Please login again..."})
 
+//         const error = new AppError ("Wrong or Invalid token,Please login again...", 401)
+
+//         return next(error)
+
+//         }else{
+//             req.user = payload
+//         }
+//         next()
+
+//     })
 // }
-
-const verifyToken = async(req,res,next)=>{
-    const token = req.body.token || req.query.token || req.headers["x-access-token"]
-
-    // check if token exist
-    if(!token){
-        return res.status(403).json({message:"An authentication token is required..."})
-    }
-     await jwt.verify(token,process.env.TOKEN_KEY,(err,payload)=>{
-        if(err){
-            return res.status(403).json({message:"Wrong or Invalid token,Please login again..."})
-        }else{
-            req.user = payload
-            next()
-        }
-    })
-}
-module.exports = verifyToken
+module.exports = verify;

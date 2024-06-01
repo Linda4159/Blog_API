@@ -16,7 +16,7 @@ const OTPSchema = new mongoose.Schema({
     },
     duration:{
         type:String,
-        default : 10
+        default : 60
     }
 })
 module.exports = mongoose.model("OTP",OTPSchema)

@@ -10,6 +10,9 @@ router.route("/sign-up").post(authController.signUp )
 router.route("/login").post(authController.login)
 router.route("/forgot-password-otp").post(authController.forgotPassword)
 router.route("/password-reset-verification").post(authController.passwordReset)
+// router.route("/forget-password-otp").post(authController.passwordForget)
+
+
 
 
 

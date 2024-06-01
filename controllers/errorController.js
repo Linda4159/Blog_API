@@ -1,19 +1,22 @@
 const AppError = require("../utils/appError");
 
+
+
 const castErrorHandler = (err) => {
   const message = `Invalid ${err.path} : ${err.value}.`;
   return new AppError(message, 400);
 };
 
+
+
 const DuplicateFieldsErrorHandler = (err) => {
-  // const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-  // console.log(value);
   const title = err.keyValue.title
   const message = `There is already a blog with title : ${title}. Please use another title`
-  // const message = `Duplicate field value: ${value}.Please use another value!!!`;
 
   return new AppError(message, 400);
 };
+
+
 
 const ValidationErrorHandler = (err) => {
   const errors = Object.values(err.errors).map(el => el.message);
@@ -22,6 +25,14 @@ const ValidationErrorHandler = (err) => {
 
   return new AppError(message, 400);
 };
+
+
+
+const jwtErrorHandler = () => new AppError("Invalid Token. Please login again!!!", 401)
+
+
+const jwtExpireErrorHandler = () => new AppError("Your token has expired. Please login again!!!",401)
+
 
 const sendErrorDev = (err,res) => {
   res.status(err.statusCode).json({
@@ -32,6 +43,8 @@ const sendErrorDev = (err,res) => {
     
   });
 };
+
+
 
 const sendErrorProd = (err,res) => {
   if (err.isOperational) {
@@ -48,6 +61,8 @@ const sendErrorProd = (err,res) => {
     });
   }
 };
+
+
 
 module.exports = (err, req, res, next) => {
   // console.log(err.stack);
@@ -70,6 +85,10 @@ module.exports = (err, req, res, next) => {
 
     if (error.name === "ValidationError")
       error = ValidationErrorHandler(error);
+
+      if(error.name === "JsonWebTokenError") error = jwtErrorHandler()
+
+      if(error.name === "TokenExpiredError") error = jwtExpireErrorHandler()
 
     sendErrorProd(error,res);
   }

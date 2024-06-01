@@ -2,6 +2,8 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const userModel = require("../models/userModel");
 const signToken = require("../utils/createToken");
+const catchAsync = require("./../utils/catchAsync")
+const AppError = require("./../utils/appError")
 const {
   sendPasswordResetOTPEmail,
   resetUserPassword,
@@ -11,17 +13,21 @@ const sendVerificationEmailOtp = require("../utils/sendVerifcationaEmail");
 
 
 
-exports.signUp = async (req, res) => {
-  try {
+exports.signUp = catchAsync(async (req, res, next) => {
     let { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      throw Error("please fill all fields");
+      const error = new AppError ("please fill all fields", 400);
+
+      return next(error)
     }
 
     const isExisting = await userModel.findOne({ email });
     if (isExisting) {
-      throw Error("Email already in use by another user");
+      const error = new AppError ("Email already in use by another user", 400);
+
+      return next(error)
+
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -41,33 +47,36 @@ exports.signUp = async (req, res) => {
         user,
       },
     });
-  } catch (error) {
-    return res.status(404).json({
-      status: "fail",
-      message: "Failed to create user",
-      error: error.message,
-    });
   }
-};
+);
 
-exports.login = async (req, res) => {
-  try {
+exports.login = catchAsync(async (req, res, next) => {
+  
     let { email, password } = req.body;
 
-    const checkEmail = await userModel.findOne({ email });
+    const checkEmail = await userModel.findOne({ email }).select("+password");
 
     if (!checkEmail) {
-      throw Error("Incorrect email provided");
+      const error = new AppError ("Incorrect email or provided", 400);
+
+      return next(error)
+
     }
 
-    const checkPassword = bcrypt.compare(password, checkEmail.password);
+    const checkPassword = await bcrypt.compare(password, checkEmail.password);
 
     if (!checkPassword) {
-      throw Error("Incorrect password provided");
+      const error =new  AppError ("Incorrect password or email provided", 400);
+
+      return next(error)
+
     }
 
     if (!checkEmail.verified) {
-      throw Error("Email is not verified, Check your inbox...");
+      const error = new AppError ("Email is not verified, Check your inbox...", 400);
+
+      return next(error)
+
     }
     // create Token
 
@@ -80,26 +89,24 @@ exports.login = async (req, res) => {
     return res.status(201).json({
       status: "success",
       message: "Login successful",
+      token,
       data: {
         checkEmail,
       },
     });
-  } catch (error) {
-    return res.status(404).json({
-      status: "fail",
-      message: "Login failed",
-      error: error.message,
-    });
   }
-};
+);
 
 // Password reset request
-exports.forgotPassword = async (req, res) => {
-  try {
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  
     const { email } = req.body;
 
     if (!email) {
-      throw Error("Email is required");
+      const error = new AppError ("Email is required", 400);
+
+      return next(error)
+
     }
 
     const createdPasswordResetOtp = await sendPasswordResetOTPEmail(email);
@@ -110,32 +117,26 @@ exports.forgotPassword = async (req, res) => {
         createdPasswordResetOtp,
       },
     });
-  } catch (error) {
-    return res.status(404).json({
-      status: "fail",
-      message: "OTP for passowrd reset failed",
-      error: error.message,
-    });
-  }
-};
+  
+});
+
+
 
 // Verify Password Reset OTP from user
-exports.passwordReset = async (req, res) => {
-  try {
+exports.passwordReset = catchAsync(async (req, res, next) => {
+  
     let { email, newPassword, OTP } = req.body;
 
     if (!(email && newPassword && OTP)) {
-      throw Error("Please fill all fields...");
+      const error = new AppError("Please fill all fields...", 400);
+
+      return next(error)
+
     }
 
     await resetUserPassword({ email, newPassword, OTP });
 
     res.status(201).json({ email, Passwordreset: true });
-  } catch (error) {
-    return res.status(404).json({
-      status: "fail",
-      message: "Password reset failed",
-      error: error.message,
-    });
-  }
-};
+ 
+});
+

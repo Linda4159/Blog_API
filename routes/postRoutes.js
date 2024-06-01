@@ -1,7 +1,7 @@
 const express = require("express");
 const postController = require("../controllers/postController");
 const multer = require("../middleware/multer")
-const verifyToken = require("../middleware/verify")
+const verify = require("../middleware/verify")
 const restrictedTo = require("../middleware/restricted")
 
 
@@ -21,10 +21,10 @@ router
     multer.uploadBlogImage,
     multer.resizeBlogImages,
     postController.postBlog)
-  .get(postController.allBlogs);
+  .get(verify, postController.allBlogs);
 router
   .route("/:id")
-  .get(postController.getOne)
+  .get(verify,postController.getOne)
   // .patch(verifyToken, restrictedTo("author"),postController.updateBlog)
   // .delete(verifyToken, restrictedTo("admin","author"),postController.deleteBlog);
 

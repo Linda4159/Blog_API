@@ -16,7 +16,7 @@ const sendVerificationEmailOtp = async (email) => {
       email,
       subject: "Email Verification",
       message: "Verify your email with the code below",
-      duration: 10,
+      duration: 60,
     };
 
     const createdOtp = await sendOTP(otpDetails);

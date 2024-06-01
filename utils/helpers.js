@@ -9,7 +9,6 @@ const bcrypt = require("bcrypt");
 // Send generated OTP to the user and hash the created OTP before sending to the database
 const sendOTP = async ({ email, subject, message, duration }) => {
   try {
-
     if (!(email && subject && message)) {
       throw Error("All fields required");
     }
@@ -25,7 +24,7 @@ const sendOTP = async ({ email, subject, message, duration }) => {
       from: process.env.AUTH_MAIL,
       to: email,
       subject,
-      html: `<p>${message}</p style="color:tomato;font-size:25px;letter-spacing:2px;"><b>${generatedOTP}</b></p><p>This code <b>expires in ${duration} minutes(s)<b/>.</p>`,
+      html: `<p>${message}</p style="color:tomato;font-size:25px;letter-spacing:2px;"><b>${generatedOTP}</b></p><p>This code <b>expires in ${duration} minute(s)<b/>.</p>`,
     };
 
     await sendEmail(mailOptions);
@@ -33,7 +32,7 @@ const sendOTP = async ({ email, subject, message, duration }) => {
     // save the OTP record
     const saltOTP = await bcrypt.genSalt(10);
     const hashedOTP = await bcrypt.hash(generatedOTP, saltOTP);
-    
+
     const newOTP = await otpModel.create({
       email,
       OTP: hashedOTP,
@@ -41,20 +40,16 @@ const sendOTP = async ({ email, subject, message, duration }) => {
       expiresAt: Date.now() + 3600000 * +duration,
     });
 
-     const createdOtpRecord = await newOTP.save();
-     return createdOtpRecord
-
+    const createdOtpRecord = await newOTP.save();
+    return createdOtpRecord;
   } catch (error) {
     throw Error;
   }
 };
 
-
-
 // Verify the OTP the user input and compare it with the one sent to the database
 const verifyOTP = async ({ email, OTP }) => {
   try {
-
     if (!email || !OTP) {
       throw Error("Email and OTP required");
     }
@@ -85,12 +80,10 @@ const verifyOTP = async ({ email, OTP }) => {
   }
 };
 
-
 // Verify the OTP the user sent back if it conrespond with what what sent to the user's email
-const verifyUserEmail = async ({email, OTP}) => {
+const verifyUserEmail = async ({ email, OTP }) => {
   try {
-
-    const validOTP = await verifyOTP({email,OTP});
+    const validOTP = await verifyOTP({ email, OTP });
 
     if (!validOTP) {
       throw Error("Wrong OTP passed, check your inbox for the right OTP...");
@@ -116,8 +109,6 @@ const deleteOtp = async (email) => {
   }
 };
 
-
-
 // Request for Password Reset OTP
 const sendPasswordResetOTPEmail = async (email) => {
   try {
@@ -137,7 +128,7 @@ const sendPasswordResetOTPEmail = async (email) => {
       email,
       subject: "Password reset",
       message: "Enter the code below to reset your password",
-      duration: 10,
+      duration: 20,
     };
 
     const createdOtp = await sendOTP(otpDetails);
@@ -172,6 +163,41 @@ const resetUserPassword = async ({ email, newPassword, OTP }) => {
     throw Error;
   }
 };
+
+
+
+// const newUserPassword = async({newPassword, OTP});
+// try {
+//   const checkOTP = await verifyOTP({ OTP });
+
+//   if (!checkOTP) {
+//     throw Error("Incorrect OTP, please input the correct OTP....");
+//   }
+
+//   const checkUser = await userModel.findById(req.params.id)
+//   if(!checkUser){
+//     throw Error("This user does not exist....")
+//   }
+//   // Update new password
+//   if (newPassword.length < 6) {
+//     throw Error("Password is too short and not strong enough...");
+//   }
+
+//   const hashNewPassword = await bcrypt.hash(newPassword, 10);
+//   await userModel.updateOne(
+//     { id },
+//     { password: hashNewPassword },
+//     { new: true }
+//   );
+
+//   await deleteOtp(email);
+//   return;
+// } catch (error) {
+//   throw Error;
+// }
+
+
+
 
 module.exports = {
   verifyUserEmail,
